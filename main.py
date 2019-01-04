@@ -10,7 +10,124 @@ class MessengerAnalysis:
         self.users = {}
         self.words_by_users = {}
         self.messages = []
-        self.words_to_skip = ['the', 'a', 'an', 'and', 'i', 'to', 'it', 'that', 'be', 'for', 'its', 'have', 'thats', 'he', 'she', 'my']
+        self.words_to_skip = [
+            'the',
+            'be',
+            'to',
+            'of',
+            'and',
+            'a',
+            'in',
+            'that',
+            'have',
+            'i',
+            'it',
+            'for',
+            'not',
+            'on',
+            'with',
+            'he',
+            'as',
+            'you',
+            'do',
+            'at',
+            'this',
+            'but',
+            'his',
+            'by',
+            'from',
+            'they',
+            'we',
+            'say',
+            'her',
+            'she',
+            'or',
+            'will',
+            'an',
+            'my',
+            'one',
+            'all',
+            'would',
+            'there',
+            'their',
+            'what',
+            'so',
+            'up',
+            'out',
+            'if',
+            'about',
+            'who',
+            'get',
+            'which',
+            'go',
+            'when',
+            'me',
+            'make',
+            'can',
+            'like',
+            'time',
+            'no',
+            'just',
+            'him',
+            'know',
+            'take',
+            'person',
+            'into',
+            'year',
+            'your',
+            'good',
+            'some',
+            'could',
+            'them',
+            'see',
+            'other',
+            'than',
+            'then',
+            'now',
+            'look',
+            'only',
+            'come',
+            'its',
+            'over',
+            'think',
+            'also',
+            'back',
+            'after',
+            'use',
+            'two',
+            'how',
+            'our',
+            'work',
+            'first',
+            'well',
+            'way',
+            'even',
+            'new',
+            'want',
+            'because',
+            'any',
+            'these',
+            'give',
+            'day',
+            'most',
+            'us',
+            'im',
+            'is',
+            'was',
+            'yeah',
+            'thats',
+            'too',
+            'ill',
+            'ok',
+            'okay',
+            'are',
+            'been',
+            'dont',
+            'had',
+            'were',
+            'cant',
+            'youre'
+        ]
         self.punctuation_table = str.maketrans({key: None for key in string.punctuation})
 
     def clean_up_words(self, words):
@@ -36,7 +153,7 @@ class MessengerAnalysis:
     def get_thread_messages(self, thread_id, limit):
         return self.client.fetchThreadMessages(thread_id=thread_id, limit=limit)
 
-    def get_messages_and_analyze(self, thread_id, limit=100):
+    def get_messages_and_analyze(self, thread_id, limit=500):
         if self.messages:
             return
 
@@ -55,6 +172,9 @@ class MessengerAnalysis:
 
             user_name = self.users[user_id]
 
+            if not message.text:
+                continue
+            
             words = message.text.split()
             cleaned_words = self.clean_up_words(words)
 
@@ -114,10 +234,10 @@ if __name__ == '__main__':
     for thread_id in threads:
         print(thread_id)
 
-    print("Insert thread ID", end:": ")
+    print("Insert thread ID", end=": ")
 
     thread = input()
 
-    ma.get_messages_and_analyze(thread, 200)
+    ma.get_messages_and_analyze(thread, 5000)
     ma.get_top_words_by_user(10, True)
 
