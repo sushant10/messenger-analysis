@@ -2,13 +2,16 @@ from fbchat import Client
 from fbchat.models import *
 import string
 import getpass
+from emoji import UNICODE_EMOJI
 
 class MessengerAnalysis:
     def __init__(self, email, password):
         self.client = Client(email, password)
         self.all_words = {}
+        self.all_emojis = {}
         self.users = {}
         self.words_by_users = {}
+        self.emojis_by_users = {}
         self.messages = []
         self.words_to_skip = [
             'the',
@@ -126,9 +129,35 @@ class MessengerAnalysis:
             'had',
             'were',
             'cant',
-            'youre'
+            'youre',
+            'got',
+            'hes',
+            'has',
+            "i'm",
+            "don't",
+            "it's",
+            'youll',
+            'u',
+            'tho',
+            'did',
+            'ive',
+            'mean',
+            'really',
+            'gonna',
+            'though',
+            "you're",
+            'here',
+            'much'
         ]
         self.punctuation_table = str.maketrans({key: None for key in string.punctuation})
+
+    def is_emoji(self, word):
+        count = 0
+        for emoji in UNICODE_EMOJI:
+            count += word.count(emoji)
+            if count > 1:
+                return False
+        return bool(count)
 
     def clean_up_words(self, words):
         cleaned_words = []
@@ -162,6 +191,9 @@ class MessengerAnalysis:
 
         for message in self.messages:
 
+            if not message.text:
+                continue
+
             user_id = message.author
 
             if user_id not in self.users:
@@ -170,15 +202,31 @@ class MessengerAnalysis:
             if user_id not in self.words_by_users:
                 self.words_by_users[user_id] = {}
 
-            user_name = self.users[user_id]
+            if user_id not in self.emojis_by_users:
+                self.emojis_by_users[user_id] = {}
 
-            if not message.text:
-                continue
+            user_name = self.users[user_id]
             
             words = message.text.split()
             cleaned_words = self.clean_up_words(words)
 
             for word in cleaned_words:
+
+                if not word:
+                    continue
+
+                if self.is_emoji(word):
+                    if word not in self.all_emojis:
+                        self.all_emojis[word] = 0
+                    self.all_emojis[word] += 1
+
+                    user_emojis_dict = self.emojis_by_users[user_id]
+                    if word not in user_emojis_dict:
+                        user_emojis_dict[word] = 0
+                    user_emojis_dict[word] += 1
+
+                    continue
+
                 if word not in self.all_words:
                     self.all_words[word] = 0
                 self.all_words[word] += 1
@@ -217,6 +265,14 @@ class MessengerAnalysis:
             self.print_words(sorted_by_frequency, user_words_dict, limit)
             print('\n')
 
+    def get_top_emojis_by_user(self, limit=5, reverse=True):
+        for user_id in self.users:
+            user_emojis_dict = self.emojis_by_users[user_id]
+            sorted_by_frequency = self.get_sorted_by_frequency(user_emojis_dict, reverse=reverse)
+            print(self.users[user_id] + ':')
+            self.print_words(sorted_by_frequency, user_emojis_dict, limit)
+            print('\n')
+
 
 if __name__ == '__main__':
     print("Welcome to Messenger Analysis")
@@ -228,8 +284,8 @@ if __name__ == '__main__':
 
     ma = MessengerAnalysis(email, password)
 
-    print("Here are the 5 most recent messenger threads. Which one would you like to analyze?")
-    threads = ma.get_thread_list(5) 
+    print("Here are the 10 most recent messenger threads. Which one would you like to analyze?")
+    threads = ma.get_thread_list(10) 
 
     for thread_id in threads:
         print(thread_id)
@@ -238,6 +294,7 @@ if __name__ == '__main__':
 
     thread = input()
 
-    ma.get_messages_and_analyze(thread, 5000)
+    ma.get_messages_and_analyze(thread, 20000)
     ma.get_top_words_by_user(10, True)
+    ma.get_top_emojis_by_user(5, True)
 
